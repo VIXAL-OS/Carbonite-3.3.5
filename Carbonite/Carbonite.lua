@@ -6715,10 +6715,23 @@ local sta1=Nx.ChO[fol.Per]
 local deM=NxData.DebugMap
 local shC=self.SQGC
 local qId1=Que.QId1
+local plL=Nx.CuC["Level"]
+local prQ=Que.NotYetPrev
+if not prQ then
+prQ={}
+for id,q in pairs(Que.ITQ) do
+local _,_,_,_,nxt=Que:Unp(q[1])
+if nxt and nxt>0 then
+prQ[nxt]=id
+end
+end
+Que.NotYetPrev=prQ
+end
 for nam2,qda in pairs(stz) do
 local nam=strsplit("=",nam2)
 local anD
 local show
+local avl
 local s=nam
 for n=1,#qda,4 do
 local qId=tonumber(strsub(qda,n,n+3),16)
@@ -6732,6 +6745,8 @@ local col2="|r"
 local dai=Que.DaI[qId] or Que.DDI[qId]
 anD=anD or dai
 local sta,qTi=Nx:GeQ(qId)
+local pre=prQ[qId]
+local noY=sta~="C" and not qId1[qId] and ((min5>0 and min5>plL) or (pre and Nx:GeQ(pre)~="C"))
 if dai then
 col2="|cffa0a0ff"
 show=true
@@ -6743,9 +6758,17 @@ col2="|cff80f080"
 end
 show=true
 end
+if noY then
+col2="|cffc080ff"
+elseif dai or sta~="C" then
+avl=true
+end
 s=format("%s\n|cffbfbfbf%d%s %s",s,lvl,col2,qna)
 if que.CNu then
 s=s .. format(" (Part %d)",que.CNu)
+end
+if noY then
+s=s .. " (not yet)"
 end
 if dai then
 s=s ..(Que.DDI[qId] and " (Dungeon Daily" or " (Daily")
@@ -6777,7 +6800,7 @@ local qId=tonumber(strsub(qda,1,4),16)
 local que=Que.ITQ[qId]
 local stN1,zon,x,y=Que:GOP(que,que[2])
 local wx,wy=Map:GWP(maI,x,y)
-local tx=anD and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimB" or tx
+local tx=(show and not avl) and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimP" or anD and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimB" or tx
 local ico=map:AIP(show and "!GQ" or "!GQC",wx,wy,nil,tx)
 map:SIT(ico,s)
 ico.UDQGD=qda
