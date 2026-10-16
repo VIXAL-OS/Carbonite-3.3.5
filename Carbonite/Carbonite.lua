@@ -6732,6 +6732,8 @@ local nam=strsplit("=",nam2)
 local anD
 local show
 local avl
+local hid
+local kep
 local s=nam
 for n=1,#qda,4 do
 local qId=tonumber(strsub(qda,n,n+3),16)
@@ -6740,7 +6742,12 @@ local qna,_,lvl,min5=Que:Unp(que[1])
 if lvl<1 then
 lvl=Nx.CuC["Level"]
 end
-if lvl>=miL and lvl<=maL1 then
+local nev=Nx.NotYetNever and Nx:GeQ(qId)~="C" and not qId1[qId] and Nx.NotYetNever(qId)
+if nev then
+hid=true
+end
+if lvl>=miL and lvl<=maL1 and not nev then
+kep=true
 local col2="|r"
 local dai=Que.DaI[qId] or Que.DDI[qId]
 anD=anD or dai
@@ -6805,7 +6812,7 @@ if sta1==3 and not anD then
 show=false
 shC=false
 end
-if show or shC then
+if (show or shC) and (kep or not hid) then
 local qId=tonumber(strsub(qda,1,4),16)
 local que=Que.ITQ[qId]
 local stN1,zon,x,y=Que:GOP(que,que[2])
@@ -18054,11 +18061,14 @@ if bit.band(mas,1)>0 then
 if not(cur and(cur.QI>0 or cur.Par)) then
 local stN1,zon,x,y=Que:GOP(que,que[2])
 local maI=Map.NTMI[zon]
-if maI then
+local why,nev
+if Nx.NotYetWhy then
+why,nev=Nx.NotYetWhy(trI)
+end
+if maI and not nev then
 local wx,wy=map:GWP(maI,x,y)
 local f=map:GIS(4)
 if map:CFW(f,wx,wy,nav,nav,0) then
-local why=Nx.NotYetWhy and Nx.NotYetWhy(trI)
 f.NxT=format("%s\nStart: %s (%.1f %.1f)",qna,stN1,x,y)
 if why then
 f.NxT=f.NxT .. "\n|cffc080ffNot yet: " .. why
@@ -32257,7 +32267,32 @@ if not GetFactionInfoByID then return nil end
 local ok,_,_,_,_,_,value=pcall(GetFactionInfoByID,faction)
 return ok and value or nil
 end
+-- Permanently closed: this character can never take the quest (the callers hide it): a class it isn't, over the max
+-- level, a positive exclusive group where another member is already rewarded (unless both repeat), a breadcrumb whose
+-- target is already rewarded. Race isn't in quest_template_addon (only faction, which Carbonite already filters).
+local function never(id)
+local r=rule(id)
+if not r then return nil end
+if r.m and UnitLevel("player")>r.m then return "max level "..r.m end
+if r.c then
+local _,cls=UnitClass("player")
+local bit1=CLASS_BIT[cls]
+if bit1 and bit.band(r.c,bit1)==0 then return "other classes" end
+end
+if r.x and r.x>0 then
+for _,o in ipairs(group(r.x)) do
+if o~=id and done(o) and not (repeatable(id) and repeatable(o)) then return "chose "..name(o) end
+end
+end
+if r.b and done(r.b) and not repeatable(r.b) then return "led to "..name(r.b) end
+return nil
+end
+-- Returns why the server would refuse the quest now, or nil; the second value is true when that is permanent (never).
+-- Everything not permanent stays "not yet" (purple), including the unclear cases: a missing previous quest, another
+-- member of the quest's exclusive group or a breadcrumb's target merely in the log, reputation.
 local function blocked(id)
+local nv=never(id)
+if nv then return nv,true end
 -- Player::SatisfyQuestBreadcrumb: a quest is closed while a breadcrumb leading to it is in the log.
 local lead=crumbsFor(id)
 if lead then
@@ -32267,12 +32302,6 @@ end
 end
 local r=rule(id)
 if not r then return nil end
-if r.m and UnitLevel("player")>r.m then return "max level "..r.m end
-if r.c then
-local _,cls=UnitClass("player")
-local bit1=CLASS_BIT[cls]
-if bit1 and bit.band(r.c,bit1)==0 then return "other classes" end
-end
 if r.p then
 local ok,need
 for _,p in ipairs(r.p) do
@@ -32297,10 +32326,10 @@ if not ok then return "needs "..name(need) end
 end
 if r.x and r.x>0 then
 for _,o in ipairs(group(r.x)) do
-if o~=id and (active(o) or (done(o) and not (repeatable(id) and repeatable(o)))) then return "chose "..name(o) end
+if o~=id and active(o) then return "chose "..name(o) end
 end
 end
--- ... and a breadcrumb closes once the quest it leads to is taken or done.
+-- ... and a breadcrumb closes once the quest it leads to is taken (done is permanent, above).
 if r.b and started(r.b) then return "led to "..name(r.b) end
 if r.r then
 local v=standing(r.r[1])
@@ -32313,14 +32342,20 @@ end
 return nil
 end
 Nx.NotYetBlocked=blocked
+Nx.NotYetNever=never
 end
 -- END CHROMIE QUEST RULES
 -- Not yet, for one quest: not done, not in the log, and below its minimum level or refused by the server's rules.
--- Returns why, or nil. (The giver layer, map mode 38, makes the same checks inline.)
+-- Returns why, or nil; the second value is true when this character can never take it (Nx.NotYetNever).
+-- (The giver layer, map mode 38, makes the same checks inline.)
 function Nx.NotYetWhy(qId)
 local Que=Nx.Que
 if Nx:GeQ(qId)=="C" or (Que.QId1 and Que.QId1[qId]) then
 return nil
+end
+local nv=Nx.NotYetNever and Nx.NotYetNever(qId)
+if nv then
+return nv,true
 end
 local q=Que.ITQ and Que.ITQ[qId]
 if q then
