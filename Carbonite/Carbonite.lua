@@ -9883,7 +9883,8 @@ local mem2=mem1-(map.DMU1 or 0)
 map.DMU1=mem1
 tit=tit..format(" Time %.4f Mem %d %.4f",t,mem1,mem2)
 end
-if GetCVar("scriptProfile")=="1" then
+-- Preserve shared CPU counters during the bounded adaptive-FPS diagnostic.
+if GetCVar("scriptProfile")=="1" and not ChromieAdaptiveFPSProfiling then
 UpdateAddOnCPUUsage()
 tit=tit..format(" |cffffffffCPU %6.3f %6.3f",GetAddOnCPUUsage("CARBONITE"),GetScriptCPUUsage())
 ResetCPUUsage()
