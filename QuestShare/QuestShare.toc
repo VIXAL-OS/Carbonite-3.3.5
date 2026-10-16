@@ -1,0 +1,7 @@
+## Interface: 30300
+## Title: Quest Share
+## Notes: A Share button on Carbonite's quest window, who in your party can take the quest, and what each of them answered.
+## OptionalDeps: Carbonite
+## Version: 1.0
+
+QuestShare.lua
