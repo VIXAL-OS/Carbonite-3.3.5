@@ -2738,7 +2738,7 @@ pun1.MId=mId
 pun1.X=x
 pun1.Y=y
 end
-if not pun1.Ale and self.Pun[nam] then
+if not pun1.Ale and self.Pun[nam] and (not self.ChromiePunkEligible or self:ChromiePunkEligible(nam)) then
 self.PHUD:Add(nam)
 if self.GOp["PunkMAlertText"] then
 local tm,lvl,cla,not2=strsplit("~",self.Pun[nam])
@@ -11941,7 +11941,7 @@ end
 end
 end
 local pun1=self:GeP1(nam,plN1,rMI,x,y)
-if not pun1.Tim1 and not Nx.IBG and self.GOp["PunkNewLocalWarnChat"] then
+if not pun1.Tim1 and not Nx.IBG and self.GOp["PunkNewLocalWarnChat"] and (not self.ChromiePunkEligible or self:ChromiePunkEligible(nam)) then
 if not Nx.InS1 or self.GOp["PunkShowInSafeArea"] then
 local typ=self.Pun[nam] and "|cffff4040Punk" or "Enemy"
 Nx.prt("%s %s detected near you",typ,nam)
