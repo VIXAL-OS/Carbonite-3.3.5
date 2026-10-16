@@ -6770,7 +6770,7 @@ show=true
 end
 if noY then
 col2="|cffc080ff"
-elseif dai or sta~="C" then
+elseif not qId1[qId] and (dai or sta~="C") then
 avl=true
 end
 s=format("%s\n|cffbfbfbf%d%s %s",s,lvl,col2,qna)
@@ -18058,8 +18058,12 @@ if maI then
 local wx,wy=map:GWP(maI,x,y)
 local f=map:GIS(4)
 if map:CFW(f,wx,wy,nav,nav,0) then
+local why=Nx.NotYetWhy and Nx.NotYetWhy(trI)
 f.NxT=format("%s\nStart: %s (%.1f %.1f)",qna,stN1,x,y)
-f.tex:SetTexture("Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaim")
+if why then
+f.NxT=f.NxT .. "\n|cffc080ffNot yet: " .. why
+end
+f.tex:SetTexture(why and "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaimP" or "Interface\\AddOns\\Carbonite\\Gfx\\Map\\IconExclaim")
 end
 end
 else
@@ -32311,3 +32315,20 @@ end
 Nx.NotYetBlocked=blocked
 end
 -- END CHROMIE QUEST RULES
+-- Not yet, for one quest: not done, not in the log, and below its minimum level or refused by the server's rules.
+-- Returns why, or nil. (The giver layer, map mode 38, makes the same checks inline.)
+function Nx.NotYetWhy(qId)
+local Que=Nx.Que
+if Nx:GeQ(qId)=="C" or (Que.QId1 and Que.QId1[qId]) then
+return nil
+end
+local q=Que.ITQ and Que.ITQ[qId]
+if q then
+local _,_,_,min5=Que:Unp(q[1])
+local lvl=Nx.CuC and Nx.CuC["Level"] or UnitLevel("player")
+if min5>0 and min5>lvl then
+return "level "..min5
+end
+end
+return Nx.NotYetBlocked and Nx.NotYetBlocked(qId) or nil
+end
